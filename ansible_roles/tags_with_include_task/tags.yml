@@ -1,0 +1,4 @@
+---
+- name: display tag task result
+  debug:
+    msg: "{{ test }}"

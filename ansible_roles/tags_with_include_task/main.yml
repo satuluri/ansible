@@ -1,0 +1,14 @@
+---
+- name: Using tags along with include task
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - include: tags.yml
+      vars:
+        test: "I am first task"
+      tags: first
+    - include: tags.yml
+      vars:
+        test: "I am second task"
+      tags: second
