@@ -1,0 +1,13 @@
+---
+- name: Complex variable with include
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - include: complex_file.yml
+      vars:
+        files:
+          test1:
+            path: /tmp/foo
+          test2:
+            path: /tmp/foo

@@ -1,0 +1,14 @@
+---
+- name: task include example with variables
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - include: tmp-file-include.yml
+      vars:
+        path: /tmp/foo
+        file : herp
+    - include: tmp-file-include.yml
+      vars:
+        path: /tmp/foo
+        file: derp

@@ -1,0 +1,14 @@
+---
+- name: Passing arguments to include 
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - include: file.yml
+      vars:
+        - first_name: kiran
+        - last_name: satuluri
+    - include: file.yml
+      vars:
+        - first_name: kathy
+        - last_name: satuluri

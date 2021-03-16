@@ -1,0 +1,2 @@
+kube-client1 ansible_host=172.31.40.9
+kube-client2 ansible_host=172.31.33.208

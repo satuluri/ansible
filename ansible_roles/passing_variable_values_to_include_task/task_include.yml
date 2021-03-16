@@ -1,0 +1,9 @@
+---
+- hosts: all
+  gather_facts: false
+
+  tasks:
+    - include: more-tasks.yml
+    - name: non-include task
+      debug:
+        msg: "I am not included"

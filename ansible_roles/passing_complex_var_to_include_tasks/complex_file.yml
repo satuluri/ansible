@@ -1,0 +1,12 @@
+---
+- name: Directory creation
+  file:
+    path: "{{ item.value.path }}"
+    state: directory
+  with_dict: "{{ files }}"
+
+- name: File creation
+  file:
+    path: "{{ item.value.path + '/' + item.key }}"
+    state: touch
+  with_dict: "{{ files }}"

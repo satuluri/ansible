@@ -1,0 +1,10 @@
+---
+- name: Directory creation
+  file:
+    path: "{{ path }}"
+    state: directory
+
+- name: File creation
+  file:
+    path: "{{ path + '/' + file }}"
+    state: touch
