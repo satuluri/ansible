@@ -1,0 +1,27 @@
+---
+- name: test parted command
+  hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    - name: gather scsi info
+      shell:
+        cmd: parted -l | grep 'Disk /dev/nvme[0-9]n[0-9]*' | awk -F'[ :]' '{print $2}'
+      register: disk_info
+#    - name: Display scsi info
+#      debug:
+#        msg: "{{ disk_info.stdout_lines }}"
+    - name: parted module
+      parted:
+        device: "{{ item }}"
+        unit: GB
+        state: info
+      loop: "{{ disk_info.stdout_lines }}"
+      register: test_info
+    - name: Display details
+      debug:
+        #msg: "{{ test_info.disk.dev}} {{ test_info.disk.table }}"
+        msg: " {{ ansible_host }} {{ item.disk.dev }} {{ item.disk.table }} {{ item.disk.size }}GB"
+      loop: "{{ test_info.results }}"
+      #when: item.disk.table != 'msdos'
+      when: item.disk.table == 'unknown'
