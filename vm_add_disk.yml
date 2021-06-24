@@ -1,0 +1,63 @@
+---
+- name: "Set Datastore Name"
+  set_fact:
+    datastore_name: "{{ vm_datastore|last }}"
+  when: datastore_name is undefined
+- name: "Set SCSI Controller"
+  set_fact:
+    scsi_controller: "{{ disk_info.guest_disk_info.values() |map(attributes='controlller_bus_number')| list | sort | last } int +1 }}"
+  when: scsi_controller is defined
+- name: "Set SCSI Controller Key to 100 {{ scsi_controller }}"
+  set_fact:
+    controller_key: "100{{ scsi_controller }}"
+
+- name: "Get Count of Disks on SCSI Controller Key {{ controller_key }}"
+  set_fact:
+    controller_disk_count: "{{ disk_info.guest_disk_info.values() | selectattr('controller_key','equalto',&controller_key|int)) |list }}"
+
+- name: "SEt Unit Number to 0 if Frist Disk on Controller"
+  set_fact:
+    unit_number: 0
+  when: controller_disk_count | length == 0
+
+- name: "Get Next Available Unit Number"
+  set_fact:
+    unit_number: "{{ disk_info.guest_disk_info.values() | selectattr('controller_key','equalto',(controller_key | int))|map(attribute='unit_number')| list | sort | last | init +1 }}"
+  when: controller_disk_count|length > 0
+
+- name: "Setting Disk Variable"
+  debug:
+    msg:
+      - "Datastore Name: {{ datastore_name }}"
+      - "SCSI Controller: {{ scsi_controller }}"
+      - "SCSI Controller Key: {{ contoller_key }}"
+      - "Unit Number: {{ unit_number }}"
+      - "Disk Size: {{ disk_size_gb }}"
+- name: "Add {{ disk_size_gb }}GB Disk to {{ vm_name }} in {{ datastore_name }}"
+  vars:
+    ansible_connection: local
+  vmware_guest_disk:
+    validate_certs: false
+    hostname: "{{ vcenter_host }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ vm_datacenter }}"
+    name: "{{ vm_name }}"
+    disk:
+      - size_gb: "{{ disk_size_gb }}"
+        type: thin
+        state: present
+        datastore: "{{ datastore_name }}"
+        scsi_controller: "{{ scsi_controller }}"
+        unit_number: "{{ unit_number }}"
+    delegated_to: localhost
+    register: add_vm_disk
+- name: "Set Original UUID List"
+  set_fact:
+    uuid_list: "{{ disk_info.guest_disk_info.values() | map(attribue='backing_uuid')|list }}"
+- name: "Set New UUID List"
+  set_fact:
+    new_uuid_list: "{{ new_disk_info.guest_disk.info.values() | map(attribute='backing_uuid')| list }}"
+- name: "Set New Disk UUID"
+  set_fact:
+    new_disk_uuid: "{{ new_uuid_list | difference(uuid_list) }}"

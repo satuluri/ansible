@@ -1,0 +1,18 @@
+---
+#Displaying registered variable results of multiple commands
+---
+- hosts: all
+  become: yes
+  gather_facts: false
+
+  tasks:
+    - name: Display /etc/shadow file
+      command: "{{ item }}"
+      register: cmd_out
+      with_items:
+      - cat /etc/shadow
+      - df -h /
+    - name: Results output
+      debug:
+        msg: "{{ item.stdout_lines }}"
+      loop: "{{ cmd_out.results }}"

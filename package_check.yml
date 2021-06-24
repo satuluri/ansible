@@ -1,0 +1,20 @@
+---
+  - hosts: All
+    gather_facts: False
+    serial: 1
+    become: True
+
+    tasks:
+      - name: check package
+        command: "rpm -qa | grep CAeAC"
+        register: out
+        ignore_errors: yes
+
+      - name: Write output to a file
+        lineinfile:
+          line: "{{ inventory_hostname }}, {% if out.rc == 0 %} 'package is installed' {% else %} 'package not installed' {% endif %}"
+          regexp: "^{{ inventory_hostname }}"
+          dest: /var/tmp/report.csv
+          state: present
+        delegate_to: localhost 
+# testing git diff command

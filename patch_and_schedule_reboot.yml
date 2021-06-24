@@ -1,0 +1,49 @@
+---
+  - hosts: all
+    gather_facts: false
+    vars:
+      vcenter_username: "{{ ansible_user }}@fhlmc.com"
+      vcenter_password: 'password'
+      vm_guest_hostname: "{{ inventory_hostname }}"
+      vm_list_csv: '/var/tmp/vm_inventory.csv'
+      vm_guest_env: 'NonProd'
+    tasks:
+      - name: "Search {{ vm_list_csv }}"
+        shell: "grep -i ^'{{ vm_guest_hostname }},{{ vm_guest_env }},' {{ vm_list_csv }} | cut -d',' -f3"
+        ignore_erros: true
+        delegated_to: localhost
+      - name: "Fail if VM not found"
+        fail:
+          msg: "Unable to find {{ vm_guest_hostname }} in {{ vm_list_csv }}"
+        when: vminfo.stdout_lines|count=0
+      - name: "Fail if multiple records found"
+        fail:
+          msg: "Found {{ vminfo.stdout_lines|count }} records for {{ vm_guest_hostname }} in {{ vm_list_csv }}"
+        when: vminfo.stout_lines|count > 1
+      - name: "Set vcenter  hostname"
+        set_fact:
+          vcenter_host: "{{ vminfo.stdout_lines|join }}"
+
+      - name: 'Patch server'
+        become: yes
+        yum:
+          name: '*'
+          state: latest
+        register: yum_update
+      - debug: var=yum_update
+
+      - name: "Schedule Reboot of VM"
+        vmware_guest_powerstate:
+          hostname: "{{ vcenter_host }}"
+          username: "{{ vcenter_usernmae }}"
+          password: "{{ vcenter_password }}"
+          name: "{{ vm_guest_hostname }}"
+          state: reboot-guest
+          state_change_timeout: 300
+          scheduled_at: "13/06/2020 09:00"
+          schedule_task_name: "reboot {{ vm_guest_hostname }}"
+          schedule_task_description: "Scheduled Reboot of {{ vm_guest_hostname }}"
+          schedule_task_enabled: True
+        delegated_to: localhost
+        register: vm_reboot
+        ignore_errors: True
